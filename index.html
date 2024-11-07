@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Évaluation QCM</title>
+
+</head>
+<body>
+    <div class="container">
+        <h1>QCM</h1>
+        <form id="quizForm">
+            <!-- Questions will be added here by JavaScript -->
+        </form>
+        <br> <!-- Saut de ligne -->
+        <button id="submitBtn">Brek 3la lbotona</button>
+        <div id="result" class="hidden"></div>
+    </div>
+    <div id="alert" class="alert">
+        <p id="alertMessage"></p>
+        <button id="closeAlert">Fermer</button>
+    </div>
+    <script>
+const questions = [
+    { question: "Chnou kniyet Ayman ?", answers: ["3mmou", "Khmmou", "Demmou"], correct: 1 },
+    { question: "Wach moughit ?", answers: ["Serghini", "Mezgiti", "Sa3oudi"], correct: 0 },
+    { question: "Wach messi ?", answers: ["Argentini", "Mghribi", "Hindi"], correct: 0 },
+    { question: "Chno 3ziz 3la Reda ?", answers: ["l9raya", "rookoub lkhayl", "8 ball pool"], correct: 2 },
+    { question: "Ch7al kaygless khalid fl9hwa ?", answers: ["1 H", "30 min", "7ta tsed"], correct: 2 },
+    { question: "Chkon a9wad kdab flmghrib ?", answers: ["l3tmani", "jr", "akhnnouch"], correct: [0, 1, 2] },
+];
+
+function loadQuestions() {
+    const quizForm = document.getElementById('quizForm');
+    questions.forEach((q, index) => {
+        const questionElement = document.createElement('div');
+        questionElement.classList.add('question');
+        questionElement.innerHTML = `<p>${q.question}</p>`;
+        q.answers.forEach((answer, i) => {
+            questionElement.innerHTML += `
+                <label>
+                    <input type="checkbox" name="question${index}" value="${i}">
+                    ${answer}
+                </label>
+            `;
+        });
+        quizForm.appendChild(questionElement);
+    });
+}
+
+function calculateScore() {
+    let score = 0;
+    let unansweredCount = 0; // Compteur de questions non répondues
+
+    questions.forEach((q, index) => {
+        const selected = document.querySelectorAll(`input[name="question${index}"]:checked`);
+        const selectedValues = Array.from(selected).map(input => parseInt(input.value));
+
+        // Vérification des réponses correctes
+        if (selectedValues.length === 0) {
+            unansweredCount++; // Incrémente le compteur si aucune réponse
+        } else {
+            if (Array.isArray(q.correct)) {
+                // Vérifie si toutes les bonnes réponses ont été sélectionnées
+                const isCorrect = q.correct.every(val => selectedValues.includes(val)) &&
+                                  selectedValues.length >= 2; // Exige au moins 2 réponses correctes
+                if (isCorrect) {
+                    score++;
+                }
+            } else {
+                // Vérifie la bonne réponse unique
+                if (selectedValues.length === 1 && selectedValues[0] === q.correct) {
+                    score++;
+                }
+            }
+        }
+    });
+
+    return { score, unansweredCount }; // Retourne le score et le nombre de questions non répondues
+}
+
+function showAlert(message) {
+    const alertElement = document.getElementById('alert');
+    const alertMessage = document.getElementById('alertMessage');
+    alertMessage.textContent = message;
+    alertElement.classList.add('active'); // Affiche l'alerte
+}
+
+document.getElementById('submitBtn').addEventListener('click', () => {
+    const { score, unansweredCount } = calculateScore();
+    const resultDiv = document.getElementById('result');
+    resultDiv.classList.remove('hidden');
+    resultDiv.innerHTML = `Jbti ${score} 3la ${questions.length}.`;
+
+    // Affichage d'une alerte si des questions ne sont pas répondues
+    if (unansweredCount > 0) {
+        showAlert(`Nsiti matjaweb 3la ${unansweredCount} .`);
+    }
+
+    // Vérification des réponses et application des styles
+    questions.forEach((q, index) => {
+        const selected = document.querySelectorAll(`input[name="question${index}"]:checked`);
+        const questionElement = document.querySelector(`.question:nth-of-type(${index + 1})`);
+
+        // Récupérer les valeurs sélectionnées
+        const selectedValues = Array.from(selected).map(input => parseInt(input.value));
+
+        if (selectedValues.length > 0) { // Vérifie si l'utilisateur a répondu à la question
+            if (Array.isArray(q.correct)) {
+                // Vérification pour les questions à réponses multiples
+                q.correct.forEach(value => {
+                    const label = questionElement.querySelector(`input[value="${value}"]`).parentElement;
+                    label.classList.add('correct'); // Bonne réponse
+                });
+
+                // Mettre en rouge les réponses incorrectes
+                questionElement.querySelectorAll('input').forEach(input => {
+                    const label = input.parentElement;
+                    if (!q.correct.includes(parseInt(input.value))) {
+                        label.classList.add('incorrect'); // Mauvaise réponse
+                    }
+                });
+            } else {
+                // Pour les questions avec une seule bonne réponse
+                const correctLabel = questionElement.querySelector(`input[value="${q.correct}"]`).parentElement;
+                correctLabel.classList.add('correct'); // Bonne réponse
+
+                // Vérifie toutes les réponses et applique les styles appropriés
+                questionElement.querySelectorAll('input').forEach(input => {
+                    const label = input.parentElement;
+                    if (parseInt(input.value) !== q.correct) {
+                        label.classList.add('incorrect'); // Mauvaise réponse
+                    }
+                });
+            }
+        }
+    });
+});
+
+// Gestion de la fermeture de l'alerte
+document.getElementById('closeAlert').addEventListener('click', () => {
+    const alertElement = document.getElementById('alert');
+    alertElement.classList.remove('active'); // Masque l'alerte
+});
+
+// Charger les questions au chargement de la page
+loadQuestions();
+    </script>
+
+<style>
+    .correct {
+        color: green; /* Couleur pour les bonnes réponses */
+        font-weight: bold;
+    }
+    .incorrect {
+        color: red; /* Couleur pour les mauvaises réponses */
+        font-weight: bold;
+    }
+    .hidden {
+        display: none; /* Masquer le résultat par défaut */
+    }
+    /* Styles de l'alerte personnalisée */
+    .alert {
+        display: none; /* Masquer par défaut */
+        position: fixed;
+        top: 20%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background-color: white;
+        border: 1px solid #ccc;
+        padding: 20px;
+        z-index: 1000;
+        box-shadow: 0 0 10px rgba(0,0,0,0.3);
+        border-radius: 8px;
+        text-align: center;
+    }
+    .alert.active {
+        display: block; /* Afficher l'alerte lorsqu'elle est active */
+    }
+    .alert button {
+        margin-top: 10px;
+    }
+    .correct {
+    color: green; /* Couleur pour les bonnes réponses */
+    font-weight: bold;
+}
+.incorrect {
+    color: red; /* Couleur pour les mauvaises réponses */
+    font-weight: bold;
+}
+.hidden {
+    display: none; /* Masquer le résultat par défaut */
+}
+body {
+font-family: Arial, sans-serif;
+background-color: #f4f4f4;
+margin: 0;
+padding: 20px;
+}
+
+.container {
+max-width: 600px;
+margin: auto;
+background: white;
+padding: 20px;
+border-radius: 8px;
+box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+h1 {
+text-align: center;
+}
+
+.hidden {
+display: none;
+}
+
+button {
+display: block;
+width: 100%;
+padding: 10px;
+background-color: #28a745;
+color: white;
+border: none;
+border-radius: 5px;
+cursor: pointer;
+}
+
+button:hover {
+background-color: #218838;
+}
+
+#result {
+margin-top: 20px;
+text-align: center;
+}
+
+/* Styles pour les réponses */
+.correct {
+text-decoration: underline;
+color: green;
+}
+
+.incorrect {
+text-decoration: underline;
+color: red;
+}
+</style>
+</body>
+</html>
